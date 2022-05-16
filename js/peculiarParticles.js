@@ -32,12 +32,12 @@
 /*********************/
 
 const V_SHADER_SOURCE = `#version 300 es
-	in vec4 a_p;		// Position
+	in vec2 a_p;		// Position
 	in float a_p_s;		// Point size
 	
 	void main() {
-		gl_Position = a_p;
 		gl_PointSize = a_p_s;
+		gl_Position = vec4(a_p, 0.0, 1.0);
 	}
 `
 
@@ -55,11 +55,15 @@ const F_SHADER_SOURCE = `#version 300 es
 // Main program
 function main() {
 	let canvas = document.getElementById("canvas");
+	canvas.margin = 0;
+	canvas.width = 1.0 * window.innerWidth;
+	canvas.height = 1.01 * window.innerHeight;
+	
 	let webGL = canvas.getContext("webgl2");
 	
 	initShaders(webGL, V_SHADER_SOURCE, F_SHADER_SOURCE);
 	
-	let particle = new Particle(1, [0, 0], [0, 0], [, 0, 0, 1]);
+	let particle = new Particle(5.0, [0.0, 0.0], [0.0, 0.0], [1.0, 0.0, 0.0, 1.0]);
 	
 	drawParticle(webGL, particle);
 }
@@ -72,11 +76,11 @@ function drawParticle(gl, particle) {
 	// Fragment shader pointers
 	let u_c = gl.getUniformLocation(gl.program, "u_c");
 	
-	gl.vertexAttrib4f(a_p, particle.position[0], particle.position[1], 0.0, 0.0);
+	gl.vertexAttrib2f(a_p, particle.position[0], particle.position[1]);
 	gl.vertexAttrib1f(a_p_s, particle.size);
 	gl.uniform4f(u_c, particle.color[0], particle.color[1], particle.color[2], particle.color[3]);
 
-	followCursor(particle);
+	//followCursor(particle);
 	
 	gl.clearColor(0.0, 0.0, 0.0, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT);
@@ -87,6 +91,7 @@ function followCursor(particle) {
 	
 }
 
+// Particle constructor
 function Particle(size, position, velocity, color) {
 	this.size = size;
 	this.position = position;
