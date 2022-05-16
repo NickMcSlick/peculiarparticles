@@ -57,7 +57,6 @@ let config = {
 	MOUSE: null,
 	MOUSE_MOVEMENT: [],
 	SELECTION: 0,
-	MAX_PARTICLES: 100,
 	PARTICLES: 50,
 }
 
@@ -128,7 +127,13 @@ function updateParticle(selection, particle) {
 			followCursorCircle(canvas, particle);
 			break;
 		case 2:
-			followCursorOrbit(canvas, particle);
+			followCursorSloppyOrbit(canvas, particle);
+			break;
+		case 3:
+			followCursorSharpOrbit(canvas, particle);
+			break;
+		case 4:
+			followCursorGalaxy(canvas, particle);
 			break;
 	}
 }
@@ -216,7 +221,7 @@ function followCursorCircle(canvas, particle) {
 }
 
 // Update particle to orbit
-function followCursorOrbit(canvas, particle) {
+function followCursorSloppyOrbit(canvas, particle) {
 	if (config.MOUSE) {
 		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];	
 			
@@ -232,6 +237,58 @@ function followCursorOrbit(canvas, particle) {
 		particle.velocity = [
 			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * particle.scale * 0.2 + centerVelo[0] * 0.02,
 			-config.MOUSE_MOVEMENT[1] / 1000 + perpendicularVelo[1] * particle.scale * 0.2 + centerVelo[1] * 0.02
+		];
+		
+		particle.position = [
+			particle.position[0] + particle.velocity[0], 
+			particle.position[1] + particle.velocity[1]
+		];
+	}
+}
+
+// Update particle to orbit sharply
+function followCursorSharpOrbit(canvas, particle) {
+	if (config.MOUSE) {
+		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];	
+			
+		let centerVelo = [glMouseCoords[0] - particle.position[0], glMouseCoords[1] - particle.position[1]];
+		
+		let perpendicularVelo = [-centerVelo[1], centerVelo[0]];
+		
+		let centerMag = Math.sqrt(centerVelo[0] ** 2 + centerVelo[1] ** 2);		
+		if (centerMag < 0.2) {
+			centerVelo = [-centerVelo[0], -centerVelo[1]];
+		}
+		
+		particle.velocity = [
+			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * particle.scale * 0.2 + centerVelo[0] * 0.02,
+			-config.MOUSE_MOVEMENT[1] / 1000 + perpendicularVelo[1] * particle.scale * 0.2 + centerVelo[1] * 0.02
+		];
+		
+		particle.position = [
+			particle.position[0] + particle.velocity[0], 
+			particle.position[1] + particle.velocity[1]
+		];
+	}
+}
+
+// Update particle to strike through the center
+function followCursorGalaxy(canvas, particle) {
+	if (config.MOUSE) {
+		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];	
+			
+		let centerVelo = [glMouseCoords[0] - particle.position[0], glMouseCoords[1] - particle.position[1]];
+		
+		let perpendicularVelo = [-centerVelo[1], centerVelo[0]];
+
+		let centerMag = Math.sqrt(centerVelo[0] ** 2 + centerVelo[1] ** 2);		
+	
+		centerVelo = [7 * Math.cos(centerMag) * centerVelo[0], 7 * Math.cos(centerMag) * centerVelo[1]];
+		
+		
+		particle.velocity = [
+			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * particle.scale * 0.2 + centerVelo[0] * particle.scale,
+			-config.MOUSE_MOVEMENT[1] / 1000 + perpendicularVelo[1] * particle.scale * 0.2 + centerVelo[1] * particle.scale
 		];
 		
 		particle.position = [
