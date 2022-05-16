@@ -55,7 +55,7 @@ const F_SHADER_SOURCE = `#version 300 es
 // Configuration object
 let config = {
 	MOUSE: null,
-	SELECTION: 0,
+	SELECTION: 1,
 	PARTICLES: 10,
 }
 
@@ -78,7 +78,6 @@ function main() {
 	initShaders(webGL, V_SHADER_SOURCE, F_SHADER_SOURCE);
 	
 	setCanvasEvents(canvas);
-	
 	
 	for (let i = 0; i < config.PARTICLES; i++) {		
 		particles.push(new Particle(
@@ -114,6 +113,9 @@ function updateParticle(selection, particle) {
 	switch (selection) {
 		case 0: 
 			followCursor(canvas, particle);
+			break;
+		case 1:
+			followCursorCircle(canvas, particle);
 			break;
 	}
 }
@@ -151,6 +153,19 @@ function followCursor(canvas, particle) {
 		particle.velocity = [(2 * config.MOUSE[0] / canvas.width) - 1 - particle.position[0], (2 * config.MOUSE[1] / (-canvas.height)) + 1 - particle.position[1]];
 		particle.velocity = [particle.velocity[0] * particle.scale, particle.velocity[1] * particle.scale];
 		particle.position = [particle.position[0] + particle.velocity[0], particle.position[1] + particle.velocity[1]];
+	}
+}
+
+// Update particle to drop from the cursor
+function followCursorCircle(canvas, particle) {
+	if (config.MOUSE) {
+		let centerVelo = [(2 * config.MOUSE[0] / canvas.width) - 1 - particle.position[0], (2 * config.MOUSE[1] / (-canvas.height)) + 1 - particle.position[1]];
+		let perpendicularVelo = [-centerVelo[1], centerVelo[0]];
+		particle.velocity = [particle.velocity[0], particle.velocity[1]];
+		particle.position = [particle.position[0] + centerVelo[0] * particle.scale
+			+ perpendicularVelo[0] * particle.scale, 
+			particle.position[1] + centerVelo[1] * particle.scale 
+			+ perpendicularVelo[1] * particle.scale + particle.velocity[1]];
 	}
 }
 
