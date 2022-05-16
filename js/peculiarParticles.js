@@ -77,7 +77,11 @@ function main() {
 	let webGL = canvas.getContext("webgl2");
 	initShaders(webGL, V_SHADER_SOURCE, F_SHADER_SOURCE);
 	
+	// Get radio buttons
+	let radioButtons = document.getElementsByName("selection");
+	
 	setCanvasEvents(canvas);
+	setRadioButtonEvents(radioButtons);
 	
 	for (let i = 0; i < config.PARTICLES; i++) {		
 		particles.push(new Particle(
@@ -129,7 +133,15 @@ function setCanvasEvents(canvas) {
 	canvas.onmouseout = function() {
 		config.MOUSE = null;
 	}
-	
+}
+
+// Set the radio button events
+function setRadioButtonEvents(radioButtons) {
+	for (let i = 0; i < radioButtons.length; i++) {
+		radioButtons[i].onclick = function() {
+			config.SELECTION = parseInt(radioButtons[i].value);
+		}
+	}
 }
 
 // Draw a singular particle
@@ -162,10 +174,10 @@ function followCursorCircle(canvas, particle) {
 		let centerVelo = [(2 * config.MOUSE[0] / canvas.width) - 1 - particle.position[0], (2 * config.MOUSE[1] / (-canvas.height)) + 1 - particle.position[1]];
 		let perpendicularVelo = [-centerVelo[1], centerVelo[0]];
 		particle.velocity = [particle.velocity[0], particle.velocity[1]];
-		particle.position = [particle.position[0] + centerVelo[0] * particle.scale
-			+ perpendicularVelo[0] * particle.scale, 
-			particle.position[1] + centerVelo[1] * particle.scale 
-			+ perpendicularVelo[1] * particle.scale + particle.velocity[1]];
+		particle.position = [
+			particle.position[0] + centerVelo[0] * particle.scale + perpendicularVelo[0] * particle.scale, 
+			particle.position[1] + centerVelo[1] * particle.scale + perpendicularVelo[1] * particle.scale + particle.velocity[1]
+			];
 	}
 }
 
