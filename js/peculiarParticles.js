@@ -200,7 +200,13 @@ function followCursorOrbit(canvas, particle) {
 		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];	
 			
 		let centerVelo = [glMouseCoords[0] - particle.position[0], glMouseCoords[1] - particle.position[1]];
+		
 		let perpendicularVelo = [-centerVelo[1], centerVelo[0]];
+		
+		let centerMag = Math.sqrt(centerVelo[0] ** 2 + centerVelo[1] ** 2);		
+		if (centerMag < 0.2) {
+			centerVelo = [0.0, 0.0];
+		}
 		
 		let distance = Math.sqrt((glMouseCoords[0] - particle.position[0]) ** 2 + (glMouseCoords[1] - particle.position[1]) ** 2);
 
