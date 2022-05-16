@@ -138,6 +138,9 @@ function setCanvasEvents(canvas) {
 // Set the radio button events
 function setRadioButtonEvents(radioButtons) {
 	for (let i = 0; i < radioButtons.length; i++) {
+		if (radioButtons[i].checked) {
+			config.SELECTION = parseInt(radioButtons[i].value);
+		}
 		radioButtons[i].onclick = function() {
 			config.SELECTION = parseInt(radioButtons[i].value);
 		}
@@ -173,11 +176,16 @@ function followCursorCircle(canvas, particle) {
 	if (config.MOUSE) {
 		let centerVelo = [(2 * config.MOUSE[0] / canvas.width) - 1 - particle.position[0], (2 * config.MOUSE[1] / (-canvas.height)) + 1 - particle.position[1]];
 		let perpendicularVelo = [-centerVelo[1], centerVelo[0]];
-		particle.velocity = [particle.velocity[0], particle.velocity[1]];
+		
+		particle.velocity = [
+			centerVelo[0] * particle.scale + perpendicularVelo[0] * particle.scale,
+			centerVelo[1] * particle.scale + perpendicularVelo[1] * particle.scale
+		];
+		
 		particle.position = [
-			particle.position[0] + centerVelo[0] * particle.scale + perpendicularVelo[0] * particle.scale, 
-			particle.position[1] + centerVelo[1] * particle.scale + perpendicularVelo[1] * particle.scale + particle.velocity[1]
-			];
+			particle.position[0] + particle.velocity[0], 
+			particle.position[1] + particle.velocity[1]
+		];
 	}
 }
 
