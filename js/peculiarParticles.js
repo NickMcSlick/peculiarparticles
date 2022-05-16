@@ -55,12 +55,17 @@ const F_SHADER_SOURCE = `#version 300 es
 // Configuration object
 let config = {
 	MOUSE: [1.0, 1.0],
+	SELECTION: 0,
+	PARTICLES: 10,
 }
 
 // Main program
 function main() {
 	// Animation ID
 	let animID = 1;
+	
+	// Particle array
+	let particles = [];
 	
 	// Initialize canvas
 	let canvas = document.getElementById("canvas");
@@ -74,20 +79,43 @@ function main() {
 	
 	setCanvasEvents(canvas);
 	
-	let particle = new Particle(5.0, [0.0, 0.0], [0.0, 0.0], [1.0, 0.0, 0.0, 1.0], 0.0);
+	
+	for (let i = 0; i < config.PARTICLES; i++) {		
+		particles.push(new Particle(
+			Math.log(i + 100000), 
+			[0.0, 0.0], 
+			[0.0, 0.0], 
+			[(i + 1) / (config.PARTICLES + 1) * 0.8 + 0.2, 0.0, 0.0, 1.0], 
+			(i + 1) / (3 * config.PARTICLES)));
+		console.log(particles[i]);
+	}
 	
 	let update = function() {
-		cancelAnimationFrame(animID);
-		if (particle.offset < 0.0) {
-			followCursor(canvas, particle);
-		} else {
-			particle.offset--;
-		}
-		drawParticle(webGL, particle);
+		cancelAnimationFrame(animID);		
+		webGL.clearColor(0.0, 0.0, 0.0, 1.0);
+		webGL.clear(webGL.COLOR_BUFFER_BIT);
+		drawParticles(webGL, particles);
 		animID = requestAnimationFrame(update);
 	}
 	
 	update();
+}
+
+// Draw a particle array
+function drawParticles(webGL, particleArray) {
+	for (let i = 0; i < particleArray.length; i++) {
+		updateParticle(config.SELECTION, particleArray[i]);
+		drawParticle(webGL, particleArray[i]);
+	}
+}
+
+// Update a particle
+function updateParticle(selection, particle) {
+	switch (selection) {
+		case 0: 
+			followCursor(canvas, particle);
+			break;
+	}
 }
 
 // Set the canvas events to update the mouse position
@@ -102,6 +130,7 @@ function setCanvasEvents(canvas) {
 	
 }
 
+// Draw a singular particle
 function drawParticle(gl, particle) {
 	// Vertex shader pointers
 	let a_p = gl.getAttribLocation(gl.program, "a_p");
@@ -113,9 +142,6 @@ function drawParticle(gl, particle) {
 	gl.vertexAttrib2f(a_p, particle.position[0], particle.position[1]);
 	gl.vertexAttrib1f(a_p_s, particle.size);
 	gl.uniform4f(u_c, particle.color[0], particle.color[1], particle.color[2], particle.color[3]);
-	
-	gl.clearColor(0.0, 0.0, 0.0, 1.0);
-	gl.clear(gl.COLOR_BUFFER_BIT);
 	gl.drawArrays(gl.POINTS, 0, 1);
 }
 
@@ -123,18 +149,17 @@ function drawParticle(gl, particle) {
 function followCursor(canvas, particle) {
 	if (config.MOUSE) {
 		particle.velocity = [(2 * config.MOUSE[0] / canvas.width) - 1 - particle.position[0], (2 * config.MOUSE[1] / (-canvas.height)) + 1 - particle.position[1]];
-		particle.velocity = [particle.velocity[0] * 0.1, particle.velocity[1] * 0.1];
+		particle.velocity = [particle.velocity[0] * particle.scale, particle.velocity[1] * particle.scale];
 		particle.position = [particle.position[0] + particle.velocity[0], particle.position[1] + particle.velocity[1]];
-		console.log(particle.velocity);
 	}
 }
 
 // Particle constructor
-function Particle(size, position, velocity, color, offset) {
+function Particle(size, position, velocity, color, scale) {
 	this.size = size;
 	this.position = position;
 	this.velocity = velocity;
 	this.color = color;
-	this.offset = offset;
+	this.scale = scale;
 }
 
