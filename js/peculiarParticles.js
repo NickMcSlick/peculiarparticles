@@ -54,7 +54,7 @@ const F_SHADER_SOURCE = `#version 300 es
 
 // Configuration object
 let config = {
-	MOUSE: [1.0, 1.0],
+	MOUSE: null,
 	SELECTION: 0,
 	PARTICLES: 10,
 }
