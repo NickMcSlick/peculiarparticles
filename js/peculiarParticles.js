@@ -52,20 +52,54 @@ const F_SHADER_SOURCE = `#version 300 es
 	}
 `
 
+// Configuration object
+let config = {
+	MOUSE: [1.0, 1.0],
+}
+
 // Main program
 function main() {
+	// Animation ID
+	let animID = 1;
+	
+	// Initialize canvas
 	let canvas = document.getElementById("canvas");
 	canvas.margin = 0;
 	canvas.width = 1.0 * window.innerWidth;
 	canvas.height = 1.01 * window.innerHeight;
 	
+	// Get rendering context and initialize shaders
 	let webGL = canvas.getContext("webgl2");
-	
 	initShaders(webGL, V_SHADER_SOURCE, F_SHADER_SOURCE);
 	
-	let particle = new Particle(5.0, [0.0, 0.0], [0.0, 0.0], [1.0, 0.0, 0.0, 1.0]);
+	setCanvasEvents(canvas);
 	
-	drawParticle(webGL, particle);
+	let particle = new Particle(5.0, [0.0, 0.0], [0.0, 0.0], [1.0, 0.0, 0.0, 1.0], 0.0);
+	
+	let update = function() {
+		cancelAnimationFrame(animID);
+		if (particle.offset < 0.0) {
+			followCursor(canvas, particle);
+		} else {
+			particle.offset--;
+		}
+		drawParticle(webGL, particle);
+		animID = requestAnimationFrame(update);
+	}
+	
+	update();
+}
+
+// Set the canvas events to update the mouse position
+function setCanvasEvents(canvas) {
+	canvas.onmousemove = function(e) {
+		config.MOUSE = [e.clientX, e.clientY];
+	}
+	
+	canvas.onmouseout = function() {
+		config.MOUSE = null;
+	}
+	
 }
 
 function drawParticle(gl, particle) {
@@ -79,23 +113,28 @@ function drawParticle(gl, particle) {
 	gl.vertexAttrib2f(a_p, particle.position[0], particle.position[1]);
 	gl.vertexAttrib1f(a_p_s, particle.size);
 	gl.uniform4f(u_c, particle.color[0], particle.color[1], particle.color[2], particle.color[3]);
-
-	//followCursor(particle);
 	
 	gl.clearColor(0.0, 0.0, 0.0, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	gl.drawArrays(gl.POINTS, 0, 1);
 }
 
-function followCursor(particle) {
-	
+// Update particle to follow the cursor
+function followCursor(canvas, particle) {
+	if (config.MOUSE) {
+		particle.velocity = [(2 * config.MOUSE[0] / canvas.width) - 1 - particle.position[0], (2 * config.MOUSE[1] / (-canvas.height)) + 1 - particle.position[1]];
+		particle.velocity = [particle.velocity[0] * 0.1, particle.velocity[1] * 0.1];
+		particle.position = [particle.position[0] + particle.velocity[0], particle.position[1] + particle.velocity[1]];
+		console.log(particle.velocity);
+	}
 }
 
 // Particle constructor
-function Particle(size, position, velocity, color) {
+function Particle(size, position, velocity, color, offset) {
 	this.size = size;
 	this.position = position;
 	this.velocity = velocity;
 	this.color = color;
+	this.offset = offset;
 }
 
