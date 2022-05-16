@@ -57,7 +57,8 @@ let config = {
 	MOUSE: null,
 	MOUSE_MOVEMENT: [],
 	SELECTION: 0,
-	PARTICLES: 10,
+	MAX_PARTICLES: 100,
+	PARTICLES: 50,
 }
 
 // Main program
@@ -81,8 +82,12 @@ function main() {
 	// Get radio buttons
 	let radioButtons = document.getElementsByName("selection");
 	
+	// Get particle number slider
+	let particleSlider = document.getElementById("particleNum");
+	
 	setCanvasEvents(canvas);
 	setRadioButtonEvents(radioButtons);
+	setSliderEvents(particleSlider, particles);
 	
 	for (let i = 0; i < config.PARTICLES; i++) {		
 		particles.push(new Particle(
@@ -152,6 +157,22 @@ function setRadioButtonEvents(radioButtons) {
 	}
 }
 
+// Set the slider events
+function setSliderEvents(slider, particleArray) {
+	slider.onchange = function() {
+		config.PARTICLES = Math.ceil(slider.value);
+		particleArray.length = 0;
+		for (let i = 0; i < slider.value; i++) {
+			particleArray.push(new Particle(
+				Math.log(i + 100000), 
+				[0.0, 0.0], 
+				[0.0, 0.0], 
+				[(i + 1) / (config.PARTICLES + 1) * 0.8 + 0.2, 0.0, 0.0, 1.0], 
+				(i + 1) / (3 * config.PARTICLES)));
+		}
+	}
+}
+
 // Draw a singular particle
 function drawParticle(gl, particle) {
 	// Vertex shader pointers
@@ -208,9 +229,6 @@ function followCursorOrbit(canvas, particle) {
 			centerVelo = [0.0, 0.0];
 		}
 		
-		let distance = Math.sqrt((glMouseCoords[0] - particle.position[0]) ** 2 + (glMouseCoords[1] - particle.position[1]) ** 2);
-
-		console.log(config.MOUSE_MOVEMENT);
 		particle.velocity = [
 			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * particle.scale * 0.2 + centerVelo[0] * 0.02,
 			-config.MOUSE_MOVEMENT[1] / 1000 + perpendicularVelo[1] * particle.scale * 0.2 + centerVelo[1] * 0.02
