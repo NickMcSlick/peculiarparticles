@@ -55,6 +55,7 @@ const F_SHADER_SOURCE = `#version 300 es
 // Configuration object
 let config = {
 	MOUSE: null,
+	MOUSE_MOVEMENT: [],
 	SELECTION: 0,
 	PARTICLES: 10,
 }
@@ -121,6 +122,9 @@ function updateParticle(selection, particle) {
 		case 1:
 			followCursorCircle(canvas, particle);
 			break;
+		case 2:
+			followCursorOrbit(canvas, particle);
+			break;
 	}
 }
 
@@ -128,6 +132,7 @@ function updateParticle(selection, particle) {
 function setCanvasEvents(canvas) {
 	canvas.onmousemove = function(e) {
 		config.MOUSE = [e.clientX, e.clientY];
+		config.MOUSE_MOVEMENT = [e.movementX, e.movementY];
 	}
 	
 	canvas.onmouseout = function() {
@@ -171,7 +176,7 @@ function followCursor(canvas, particle) {
 	}
 }
 
-// Update particle to drop from the cursor
+// Update particle to follow the cursor in a circular fashion
 function followCursorCircle(canvas, particle) {
 	if (config.MOUSE) {
 		let centerVelo = [(2 * config.MOUSE[0] / canvas.width) - 1 - particle.position[0], (2 * config.MOUSE[1] / (-canvas.height)) + 1 - particle.position[1]];
@@ -180,6 +185,29 @@ function followCursorCircle(canvas, particle) {
 		particle.velocity = [
 			centerVelo[0] * particle.scale + perpendicularVelo[0] * particle.scale,
 			centerVelo[1] * particle.scale + perpendicularVelo[1] * particle.scale
+		];
+		
+		particle.position = [
+			particle.position[0] + particle.velocity[0], 
+			particle.position[1] + particle.velocity[1]
+		];
+	}
+}
+
+// Update particle to orbit
+function followCursorOrbit(canvas, particle) {
+	if (config.MOUSE) {
+		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];	
+			
+		let centerVelo = [glMouseCoords[0] - particle.position[0], glMouseCoords[1] - particle.position[1]];
+		let perpendicularVelo = [-centerVelo[1], centerVelo[0]];
+		
+		let distance = Math.sqrt((glMouseCoords[0] - particle.position[0]) ** 2 + (glMouseCoords[1] - particle.position[1]) ** 2);
+
+		console.log(config.MOUSE_MOVEMENT);
+		particle.velocity = [
+			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * particle.scale * 0.2 + centerVelo[0] * 0.02,
+			-config.MOUSE_MOVEMENT[1] / 1000 + perpendicularVelo[1] * particle.scale * 0.2 + centerVelo[1] * 0.02
 		];
 		
 		particle.position = [
