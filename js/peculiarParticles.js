@@ -45,9 +45,13 @@ const F_SHADER_SOURCE = `#version 300 es
 	precision highp float;
 	out vec4 out_c; // Output color
 	
-	uniform vec4 u_c;	// Input color
+	uniform vec4 u_c;		// Input color
+	uniform bool u_circle;	// Draw a circle
 	
 	void main() {
+		if (u_circle) {
+			if ( length( gl_PointCoord - vec2( 0.5, 0.5 ) ) > 0.475 ) discard; 
+		}
 		out_c = u_c;
 	}
 `
@@ -58,6 +62,8 @@ let config = {
 	MOUSE_MOVEMENT: [],
 	SELECTION: 0,
 	PARTICLES: 50,
+	COLOR: 180,
+	CIRCLE: false,
 }
 
 // Main program
@@ -78,22 +84,36 @@ function main() {
 	let webGL = canvas.getContext("webgl2");
 	initShaders(webGL, V_SHADER_SOURCE, F_SHADER_SOURCE);
 	
+	window.onresize = function() {
+		console.log("fired");
+		canvas.width = 1.0 * window.innerWidth;
+		canvas.height = 1.01 * window.innerHeight;
+		webGL.viewport(0, 0, canvas.width, canvas.height);
+	}
+	
 	// Get radio buttons
 	let radioButtons = document.getElementsByName("selection");
+	let radioShapeButtons = document.getElementsByName("shape");
 	
-	// Get particle number slider
+	// Get sliders
 	let particleSlider = document.getElementById("particleNum");
+	let colorSlider = document.getElementById("color");
+	
+	// Get the particle number display prompt
+	let particleDisplayPrompt = document.getElementById("particleNumDisplay");
 	
 	setCanvasEvents(canvas);
-	setRadioButtonEvents(radioButtons);
-	setSliderEvents(particleSlider, particles);
+	setRadioButtonEvents(radioButtons, radioShapeButtons);
+	setSliderEvents(particleSlider, colorSlider, particles);
+	
+	colorSlider.style.backgroundColor = "rgb(0, 255, 255)";
 	
 	for (let i = 0; i < config.PARTICLES; i++) {		
 		particles.push(new Particle(
 			Math.log(i + 100000), 
 			[0.0, 0.0], 
 			[0.0, 0.0], 
-			[(i + 1) / (config.PARTICLES + 1) * 0.8 + 0.2, 0.0, 0.0, 1.0], 
+			[0.0, 1.0, 1.0, 1.0], 
 			(i + 1) / (3 * config.PARTICLES)));
 		console.log(particles[i]);
 	}
@@ -103,6 +123,7 @@ function main() {
 		webGL.clearColor(0.0, 0.0, 0.0, 1.0);
 		webGL.clear(webGL.COLOR_BUFFER_BIT);
 		drawParticles(webGL, particles);
+		particleDisplayPrompt.innerHTML = "Number of Particles: " + config.PARTICLES;
 		animID = requestAnimationFrame(update);
 	}
 	
@@ -140,7 +161,7 @@ function updateParticle(selection, particle) {
 
 // Set the canvas events to update the mouse position
 function setCanvasEvents(canvas) {
-	canvas.onmousemove = function(e) {
+	window.onmousemove = function(e) {
 		config.MOUSE = [e.clientX, e.clientY];
 		config.MOUSE_MOVEMENT = [e.movementX, e.movementY];
 	}
@@ -151,7 +172,7 @@ function setCanvasEvents(canvas) {
 }
 
 // Set the radio button events
-function setRadioButtonEvents(radioButtons) {
+function setRadioButtonEvents(radioButtons, radioShapeButtons) {
 	for (let i = 0; i < radioButtons.length; i++) {
 		if (radioButtons[i].checked) {
 			config.SELECTION = parseInt(radioButtons[i].value);
@@ -160,14 +181,23 @@ function setRadioButtonEvents(radioButtons) {
 			config.SELECTION = parseInt(radioButtons[i].value);
 		}
 	}
+	
+	for (let i = 0; i < radioShapeButtons.length; i++) {
+		if (radioShapeButtons[i].checked) {
+			config.CIRCLE = parseInt(radioShapeButtons[i].value) === 1;
+		}
+		radioShapeButtons[i].onclick = function() {
+			config.CIRCLE = parseInt(radioShapeButtons[i].value) === 1;
+		}
+	}
 }
 
 // Set the slider events
-function setSliderEvents(slider, particleArray) {
-	slider.onchange = function() {
-		config.PARTICLES = Math.ceil(slider.value);
+function setSliderEvents(numSlider, colorSlider, particleArray) {
+	numSlider.oninput = function() {
+		config.PARTICLES = Math.ceil(numSlider.value);
 		particleArray.length = 0;
-		for (let i = 0; i < slider.value; i++) {
+		for (let i = 0; i < numSlider.value; i++) {
 			particleArray.push(new Particle(
 				Math.log(i + 100000), 
 				[0.0, 0.0], 
@@ -175,6 +205,42 @@ function setSliderEvents(slider, particleArray) {
 				[(i + 1) / (config.PARTICLES + 1) * 0.8 + 0.2, 0.0, 0.0, 1.0], 
 				(i + 1) / (3 * config.PARTICLES)));
 		}
+		
+		config.COLOR = colorSlider.value;
+		let color = hsvToRgb(config.COLOR / 360, 1.0, 1.0);
+		
+		for (let i = 0; i < config.PARTICLES; i++) {
+			particleArray[i].color = [
+				1 / particleArray[i].scale * color[0], 
+				1 / particleArray[i].scale * color[1],
+				1 / particleArray[i].scale * color[2],
+				1.0
+			];
+		}
+			
+		colorSlider.style.backgroundColor = "rgb("
+											+ (particleArray[particleArray.length - 1].color[0] * 255.0) + ","
+											+ (particleArray[particleArray.length - 1].color[1] * 255.0) + ","
+											+ (particleArray[particleArray.length - 1].color[2] * 255.0) + ")";
+	}
+	
+	colorSlider.oninput = function() {
+		config.COLOR = colorSlider.value;
+		let color = hsvToRgb(config.COLOR / 360, 1.0, 1.0);
+		
+		for (let i = 0; i < config.PARTICLES; i++) {
+			particleArray[i].color = [
+				1 / particleArray[i].scale * color[0], 
+				1 / particleArray[i].scale * color[1],
+				1 / particleArray[i].scale * color[2],
+				1.0
+			];
+		}
+			
+		colorSlider.style.backgroundColor = "rgb("
+											+ (particleArray[particleArray.length - 1].color[0] * 255.0) + ","
+											+ (particleArray[particleArray.length - 1].color[1] * 255.0) + ","
+											+ (particleArray[particleArray.length - 1].color[2] * 255.0) + ")";
 	}
 }
 
@@ -186,10 +252,12 @@ function drawParticle(gl, particle) {
 	
 	// Fragment shader pointers
 	let u_c = gl.getUniformLocation(gl.program, "u_c");
+	let u_circle = gl.getUniformLocation(gl.program, "u_circle");
 	
 	gl.vertexAttrib2f(a_p, particle.position[0], particle.position[1]);
 	gl.vertexAttrib1f(a_p_s, particle.size);
 	gl.uniform4f(u_c, particle.color[0], particle.color[1], particle.color[2], particle.color[3]);
+	gl.uniform1f(u_circle, config.CIRCLE);
 	gl.drawArrays(gl.POINTS, 0, 1);
 }
 
@@ -310,3 +378,32 @@ function Particle(size, position, velocity, color, scale) {
 	this.scale = scale;
 }
 
+
+// HSV to RGB color conversion
+// Based off of this code: https://axonflux.com/handy-rgb-to-hsl-and-rgb-to-hsv-color-model-c
+/**
+ * Converts an HSV color value to RGB. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSV_color_space.
+ * Assumes h, s, and v are contained in the set [0, 1] and
+ * returns r, g, and b in the set [0, 1].
+ */
+function hsvToRgb(h, s, v) {
+    var r, g, b;
+
+    var i = Math.floor(h * 6);
+    var f = h * 6 - i;
+    var p = v * (1 - s);
+    var q = v * (1 - f * s);
+    var t = v * (1 - (1 - f) * s);
+
+    switch(i % 6){
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+
+    return [r, g, b];
+}

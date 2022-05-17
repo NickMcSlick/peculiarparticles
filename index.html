@@ -2,30 +2,46 @@
 <html lang="en">
   <head>
 	<title>Peculiar Particles</title>
+	<link href="css/main.css" rel="stylesheet" type="text/css"/>
 	<script src="lib/three.min.js"></script>
 	<script src="lib/dat.gui.min.js"></script>
 	<script src="lib/webgl-utils.js"></script>
 	<script src="lib/webgl-debug.js"></script>
 	<script src="lib/cuon-utils.js"></script>
 	<script src="lib/cuon-matrix.js"></script>
-	<script src="https://webglfundamentals.org/webgl/resources/webgl-utils.js"></script>
 	<script src="js/peculiarParticles.js"></script>
   </head>
-  <body onload="main()" style="padding: 0; margin: 0; overflow: hidden;">
-	<div id="header" style="position: absolute; color: white">
-		<span>Number of Particles</span>
+  <body onload="main()">
+	<div id="mainWrapper">
+		<span class="unselectable topSliderLabel" id="particleNumDisplay">Number of Particles: 50</span>
+		<input class="slider" id="particleNum" type="range" value="50" min="1" max="100" />	
+		<span class="unselectable sliderLabel">Color:</span>
+		<input class="slider" id="color" type="range" value="180" min="0" max="360" />
+		<br><br>
+		<span class="unselectable">Shape: </span>
 		<br>
-		<input id="particleNum" type="range" value="50" min="1" max="100"></input>
+		<input id="squareShape" type="radio" name="shape" value="0" checked />
+		<label for="squareShape" class="unselectable">Square</label>
 		<br>
-		<input type="radio" name="selection" value="0" checked>Follow</input>
+		<input id="circleShape" type="radio" name="shape" value="1" />
+		<label for="circleShape" class="unselectable">Circle</label>
+		<br><br>
+		<span class="unselectable">Motion: </span>
 		<br>
-		<input type="radio" name="selection" value="1">Circle</input>
+		<input id="follow" type="radio" name="selection" value="0" checked />
+		<label for="follow" class="unselectable">Follow</label>
 		<br>
-		<input type="radio" name="selection" value="2">Sloppy Orbit</input>
+		<input id="circle" type="radio" name="selection" value="1" />
+		<label for="circle" class="unselectable">Circle</label>
 		<br>
-		<input type="radio" name="selection" value="3">Sharp Orbit</input>
+		<input id="sloppyOrbit" type="radio" name="selection" value="2" />
+		<label for="soppyOrbit" class="unselectable">Sloppy Orbit</label>
 		<br>
-		<input type="radio" name="selection" value="4">Galaxy</input>
+		<input id="sharpOrbit" type="radio" name="selection" value="3" />
+		<label for="sharpOrbit" class="unselectable">Sharp Orbit<label>
+		<br>
+		<input id="galaxy" type="radio" name="selection" value="4">
+		<label for="galaxy" class="unselectable">Galaxy</label>
 	</div>
 	<canvas id="canvas"></canvas>
   </body>
