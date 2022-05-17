@@ -329,12 +329,14 @@ function followCursorSharpOrbit(canvas, particle) {
 			centerVelo = [0.0, 0.0];
 		} else if (centerMag <= 0.15) {
 			centerVelo = [-0.5 * centerVelo[0], -0.5 * centerVelo[1]];
-		} else if (centerMag > 0.2 && centerMag < 0.2) {
+		} else if (centerMag > 0.2 && centerMag < 0.25) {
 			centerVelo = [0.1 * centerVelo[0], 0.1 * centerVelo[1]];
+		} else {
+			centerVelo = [centerVelo[0] * 1.5, centerVelo[1] * 1.5];
 		}
 		particle.velocity = [
-			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * particle.scale * 0.3 + centerVelo[0] * 0.02,
-			-config.MOUSE_MOVEMENT[1] / 1000 + perpendicularVelo[1] * particle.scale * 0.3 + centerVelo[1] * 0.02
+			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * (particle.scale + 0.1) * 0.2 + centerVelo[0] * 0.02,
+			-config.MOUSE_MOVEMENT[1] / 1000 + perpendicularVelo[1] * (particle.scale + 0.1) * 0.2 + centerVelo[1] * 0.02
 		];
 		
 		particle.position = [
