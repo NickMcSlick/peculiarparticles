@@ -11,6 +11,10 @@
 // These are all processed serially
 /***********************/
 
+/***** WARNING *****/
+// THIS PROGRAM CONTAINS FLASHING COLORS
+/*******************/
+
 /***** COPYRIGHT *****/
 // Copyright 2022 Bryce Paubel
 /*********************/
@@ -30,6 +34,8 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 /*********************/
+
+alert("WARNING: THIS PROGRAM CONTAINS FLASHING COLORS FOR PARTICLES");
 
 const V_SHADER_SOURCE = `#version 300 es
 	in vec2 a_p;		// Position
@@ -94,6 +100,10 @@ function main() {
 	// Get radio buttons
 	let radioButtons = document.getElementsByName("selection");
 	let radioShapeButtons = document.getElementsByName("shape");
+
+	// Get rave button
+	let rave = document.getElementById("rave");
+	rave.checked = false;
 	
 	// Get sliders
 	let particleSlider = document.getElementById("particleNum");
@@ -104,7 +114,7 @@ function main() {
 	
 	setCanvasEvents(canvas);
 	setRadioButtonEvents(radioButtons, radioShapeButtons);
-	setSliderEvents(particleSlider, colorSlider, particles, canvas);
+	setSliderEvents(particleSlider, colorSlider, particles, canvas, rave);
 	
 	colorSlider.style.backgroundColor = "rgb(0, 255, 255)";
 	
@@ -117,8 +127,12 @@ function main() {
 			(i + 1) / (3 * config.PARTICLES)));
 		console.log(particles[i]);
 	}
-	
+
 	let update = function() {
+		if (rave.checked) {
+			colorSlider.value = (Number(colorSlider.value) + 1) % 360;
+			colorSlider.dispatchEvent(new Event("input"));
+		}
 		cancelAnimationFrame(animID);		
 		webGL.clearColor(0.0, 0.0, 0.0, 1.0);
 		webGL.clear(webGL.COLOR_BUFFER_BIT);
@@ -216,6 +230,7 @@ function setSliderEvents(numSlider, colorSlider, particleArray, canvas) {
 		}
 		
 		config.COLOR = colorSlider.value;
+
 		let color = hsvToRgb(config.COLOR / 360, 1.0, 1.0);
 		
 		for (let i = 0; i < config.PARTICLES; i++) {

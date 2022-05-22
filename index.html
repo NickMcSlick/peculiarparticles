@@ -14,9 +14,12 @@
   <body onload="main()">
 	<div id="mainWrapper">
 		<span class="unselectable topSliderLabel" id="particleNumDisplay">Number of Particles: 50</span>
-		<input class="slider" id="particleNum" type="range" value="50" min="1" max="100" />	
+		<input class="slider" id="particleNum" type="range" value="50" min="1" max="100" />
 		<span class="unselectable sliderLabel">Color:</span>
 		<input class="slider" id="color" type="range" value="180" min="0" max="360" />
+		<br><br>
+		<input id="rave" type="checkbox" />
+		<label for="rave" class="unselectable">Rave</label>
 		<br><br>
 		<span class="unselectable">Shape: </span>
 		<br>
@@ -38,7 +41,7 @@
 		<label for="sloppyOrbit" class="unselectable">Sloppy Orbit</label>
 		<br>
 		<input id="sharpOrbit" type="radio" name="selection" value="3" />
-		<label for="sharpOrbit" class="unselectable">Sharp Orbit<label>
+		<label for="sharpOrbit" class="unselectable">Sharp Orbit</label>
 		<br>
 		<input id="galaxy" type="radio" name="selection" value="4" />
 		<label for="galaxy" class="unselectable">Galaxy</label>
