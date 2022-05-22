@@ -159,6 +159,9 @@ function updateParticle(canvas, selection, particle) {
 		case 5:
 			followCursorSpray(canvas, particle);
 			break;
+		case 6:
+			followCursorBounce(canvas, particle);
+			break;
 	}
 }
 
@@ -374,7 +377,7 @@ function followCursorGalaxy(canvas, particle) {
 	}
 }
 
-// Let the particles bounce
+// Let the particles spray
 function followCursorSpray(canvas, particle) {
 	if (config.MOUSE) {
 		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];
@@ -398,6 +401,36 @@ function followCursorSpray(canvas, particle) {
 	}
 }
 
+// Let the particles spray and bounce
+function followCursorBounce(canvas, particle) {
+	if (config.MOUSE) {
+		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];
+
+		if (particle.crossed && particle.position[1] <= -0.95 && particle.velocity[1] < 0.00001) {
+			particle.position[0] = glMouseCoords[0];
+			particle.position[1] = glMouseCoords[1];
+			particle.crossed = false;
+		}
+
+		if (0.01 > distance(glMouseCoords[0], glMouseCoords[1], particle.position[0], particle.position[1])) {
+			particle.velocity[0] = 0.001 * (Math.random() * 2 - 1);
+			particle.velocity[1] = 0.01 * Math.random();
+			particle.position[0] += particle.velocity[0];
+			particle.position[1] += particle.velocity[1];
+			particle.crossed = false;
+		}  else if (particle.position[1] < -0.95 && !particle.crossed) {
+			particle.velocity[1] = -0.9 * particle.velocity[1];
+			particle.crossed = true;
+		} else {
+			particle.velocity[1] += -0.001;
+			particle.position[0] += particle.velocity[0];
+			particle.position[1] += particle.velocity[1];
+			particle.crossed = false;
+		}
+
+	}
+}
+
 // Particle constructor
 function Particle(size, position, velocity, color, scale) {
 	this.size = size;
@@ -405,6 +438,7 @@ function Particle(size, position, velocity, color, scale) {
 	this.velocity = velocity;
 	this.color = color;
 	this.scale = scale;
+	this.crossed = false;
 }
 
 // Quick distance check
