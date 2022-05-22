@@ -488,7 +488,6 @@ function followCursorBounce(canvas, particle) {
 		particle.position[1] = clamp(particle.position[1], -0.95, 2);
 
 		if (particle.position[1] <= -0.95 && Math.abs(particle.velocity[1]) < 0.01) {
-			console.log(particle.position[1]);
 			particle.position[0] = glMouseCoords[0];
 			particle.position[1] = glMouseCoords[1];
 		}
