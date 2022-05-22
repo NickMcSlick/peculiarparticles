@@ -104,7 +104,7 @@ function main() {
 	
 	setCanvasEvents(canvas);
 	setRadioButtonEvents(radioButtons, radioShapeButtons);
-	setSliderEvents(particleSlider, colorSlider, particles);
+	setSliderEvents(particleSlider, colorSlider, particles, canvas);
 	
 	colorSlider.style.backgroundColor = "rgb(0, 255, 255)";
 	
@@ -122,7 +122,7 @@ function main() {
 		cancelAnimationFrame(animID);		
 		webGL.clearColor(0.0, 0.0, 0.0, 1.0);
 		webGL.clear(webGL.COLOR_BUFFER_BIT);
-		drawParticles(webGL, particles);
+		drawParticles(canvas, webGL, particles);
 		particleDisplayPrompt.innerHTML = "Number of Particles: " + config.PARTICLES;
 		animID = requestAnimationFrame(update);
 	}
@@ -131,15 +131,15 @@ function main() {
 }
 
 // Draw a particle array
-function drawParticles(webGL, particleArray) {
+function drawParticles(canvas, webGL, particleArray) {
 	for (let i = 0; i < particleArray.length; i++) {
-		updateParticle(config.SELECTION, particleArray[i]);
+		updateParticle(canvas, config.SELECTION, particleArray[i]);
 		drawParticle(webGL, particleArray[i]);
 	}
 }
 
 // Update a particle
-function updateParticle(selection, particle) {
+function updateParticle(canvas, selection, particle) {
 	switch (selection) {
 		case 0: 
 			followCursor(canvas, particle);
@@ -155,6 +155,9 @@ function updateParticle(selection, particle) {
 			break;
 		case 4:
 			followCursorGalaxy(canvas, particle);
+			break;
+		case 5:
+			followCursorSpray(canvas, particle);
 			break;
 	}
 }
@@ -193,14 +196,14 @@ function setRadioButtonEvents(radioButtons, radioShapeButtons) {
 }
 
 // Set the slider events
-function setSliderEvents(numSlider, colorSlider, particleArray) {
+function setSliderEvents(numSlider, colorSlider, particleArray, canvas) {
 	numSlider.oninput = function() {
 		config.PARTICLES = Math.ceil(numSlider.value);
 		particleArray.length = 0;
 		for (let i = 0; i < numSlider.value; i++) {
 			particleArray.push(new Particle(
-				Math.log(i + 100000), 
-				[0.0, 0.0], 
+				Math.log(i + 100000),
+				[(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1],
 				[0.0, 0.0], 
 				[(i + 1) / (config.PARTICLES + 1) * 0.8 + 0.2, 0.0, 0.0, 1.0], 
 				(i + 1) / (3 * config.PARTICLES)));
@@ -346,7 +349,7 @@ function followCursorSharpOrbit(canvas, particle) {
 	}
 }
 
-// Update particle to strike through the center
+// Update particle to circle around the center like a galaxy
 function followCursorGalaxy(canvas, particle) {
 	if (config.MOUSE) {
 		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];	
@@ -371,6 +374,30 @@ function followCursorGalaxy(canvas, particle) {
 	}
 }
 
+// Let the particles bounce
+function followCursorSpray(canvas, particle) {
+	if (config.MOUSE) {
+		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];
+
+		if (distance(0, 0, particle.position[0], particle.position[1]) >  Math.sqrt(2)) {
+			particle.position[0] = glMouseCoords[0];
+			particle.position[1] = glMouseCoords[1];
+		}
+
+		if (0.01 > distance(glMouseCoords[0], glMouseCoords[1], particle.position[0], particle.position[1])) {
+			particle.velocity[0] = 0.001 * (Math.random() * 2 - 1);
+			particle.velocity[1] = 0.01 * Math.random();
+			particle.position[0] += particle.velocity[0];
+			particle.position[1] += particle.velocity[1];
+		} else {
+			particle.velocity[1] += -0.0002;
+			particle.position[0] += particle.velocity[0];
+			particle.position[1] += particle.velocity[1];
+		}
+
+	}
+}
+
 // Particle constructor
 function Particle(size, position, velocity, color, scale) {
 	this.size = size;
@@ -378,6 +405,11 @@ function Particle(size, position, velocity, color, scale) {
 	this.velocity = velocity;
 	this.color = color;
 	this.scale = scale;
+}
+
+// Quick distance check
+function distance(x1, y1, x2, y2) {
+	return Math.sqrt((x1 - x2) ** 2  + (y1 - y2) ** 2);
 }
 
 
@@ -391,7 +423,6 @@ function Particle(size, position, velocity, color, scale) {
  */
 function hsvToRgb(h, s, v) {
     var r, g, b;
-
     var i = Math.floor(h * 6);
     var f = h * 6 - i;
     var p = v * (1 - s);
