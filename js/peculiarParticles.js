@@ -448,10 +448,13 @@ function followCursorBounce(canvas, particle) {
 	if (config.MOUSE) {
 		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];
 
-		if (particle.crossed && particle.position[1] <= -0.95 && particle.velocity[1] < 0.00001) {
+		particle.position[1] = clamp(particle.position[1], -0.95, 2);
+
+
+		if (particle.position[1] <= -0.95 && Math.abs(particle.velocity[1]) < 0.01) {
+			console.log(particle.position[1]);
 			particle.position[0] = glMouseCoords[0];
 			particle.position[1] = glMouseCoords[1];
-			particle.crossed = false;
 		}
 
 		if (0.01 > distance(glMouseCoords[0], glMouseCoords[1], particle.position[0], particle.position[1])) {
@@ -459,15 +462,14 @@ function followCursorBounce(canvas, particle) {
 			particle.velocity[1] = 0.01 * Math.random();
 			particle.position[0] += particle.velocity[0];
 			particle.position[1] += particle.velocity[1];
-			particle.crossed = false;
-		}  else if (particle.position[1] < -0.95 && !particle.crossed) {
-			particle.velocity[1] = -0.9 * particle.velocity[1];
-			particle.crossed = true;
+		}  else if (particle.position[1] <= -0.95) {
+			particle.velocity[1] = -0.7 * particle.velocity[1];
+			particle.position[0] += particle.velocity[0];
+			particle.position[1] += particle.velocity[1];
 		} else {
 			particle.velocity[1] += -0.001;
 			particle.position[0] += particle.velocity[0];
 			particle.position[1] += particle.velocity[1];
-			particle.crossed = false;
 		}
 
 	}
@@ -480,12 +482,21 @@ function Particle(size, position, velocity, color, scale) {
 	this.velocity = velocity;
 	this.color = color;
 	this.scale = scale;
-	this.crossed = false;
 }
 
 // Quick distance check
 function distance(x1, y1, x2, y2) {
 	return Math.sqrt((x1 - x2) ** 2  + (y1 - y2) ** 2);
+}
+
+function clamp(value, min, max) {
+	if (value <= min) {
+		return min;
+	} else if (value >= max) {
+		return max;
+	} else {
+		return value;
+	}
 }
 
 
