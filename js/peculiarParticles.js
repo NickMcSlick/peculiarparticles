@@ -15,6 +15,8 @@
 // THIS PROGRAM CONTAINS FLASHING COLORS
 /*******************/
 
+alert("WARNING: THIS PROGRAM CONTAINS FLASHING COLORS FOR PARTICLES");
+
 /***** COPYRIGHT *****/
 // Copyright 2022 Bryce Paubel
 /*********************/
@@ -35,8 +37,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 /*********************/
 
-alert("WARNING: THIS PROGRAM CONTAINS FLASHING COLORS FOR PARTICLES");
-
+// Vertex shader
 const V_SHADER_SOURCE = `#version 300 es
 	in vec2 a_p;		// Position
 	in float a_p_s;		// Point size
@@ -47,6 +48,7 @@ const V_SHADER_SOURCE = `#version 300 es
 	}
 `
 
+// Fragment shader
 const F_SHADER_SOURCE = `#version 300 es
 	precision highp float;
 	out vec4 out_c; // Output color
@@ -89,9 +91,9 @@ function main() {
 	// Get rendering context and initialize shaders
 	let webGL = canvas.getContext("webgl2");
 	initShaders(webGL, V_SHADER_SOURCE, F_SHADER_SOURCE);
-	
+
+	// Resize the canvas if the window changes
 	window.onresize = function() {
-		console.log("fired");
 		canvas.width = 1.0 * window.innerWidth;
 		canvas.height = 1.01 * window.innerHeight;
 		webGL.viewport(0, 0, canvas.width, canvas.height);
@@ -111,16 +113,21 @@ function main() {
 	
 	// Get the particle number display prompt
 	let particleDisplayPrompt = document.getElementById("particleNumDisplay");
-	
+
+	// Set events
 	setCanvasEvents(canvas);
 	setRadioButtonEvents(radioButtons, radioShapeButtons);
 	setSliderEvents(particleSlider, colorSlider, particles, canvas, rave);
-	
+
+	// Set default color
 	colorSlider.style.backgroundColor = "rgb(0, 255, 255)";
-	
-	for (let i = 0; i < config.PARTICLES; i++) {		
+
+	// Generate initial particles
+	for (let i = 0; i < config.PARTICLES; i++) {
+		// Seed the size, position, velocity, color, and scale
+		// Scale is used to determine the scaling factors of velocity, color, etc. in some functions
 		particles.push(new Particle(
-			Math.log(i + 100000), 
+			Math.log(i + 100000),
 			[0.0, 0.0], 
 			[0.0, 0.0], 
 			[0.0, 1.0, 1.0, 1.0], 
@@ -128,16 +135,28 @@ function main() {
 		console.log(particles[i]);
 	}
 
+	// Update function for animation frames
 	let update = function() {
+		// If rave checked, set the new slider value and fire its events
 		if (rave.checked) {
 			colorSlider.value = (Number(colorSlider.value) + 1) % 360;
 			colorSlider.dispatchEvent(new Event("input"));
 		}
-		cancelAnimationFrame(animID);		
+
+		// Cancel previous frame
+		cancelAnimationFrame(animID);
+
+		// Clear the canvas
 		webGL.clearColor(0.0, 0.0, 0.0, 1.0);
 		webGL.clear(webGL.COLOR_BUFFER_BIT);
+
+		// Draw the particles
 		drawParticles(canvas, webGL, particles);
+
+		// Update the number of particles
 		particleDisplayPrompt.innerHTML = "Number of Particles: " + config.PARTICLES;
+
+		// Request a new frame
 		animID = requestAnimationFrame(update);
 	}
 	
@@ -277,7 +296,8 @@ function drawParticle(gl, particle) {
 	// Fragment shader pointers
 	let u_c = gl.getUniformLocation(gl.program, "u_c");
 	let u_circle = gl.getUniformLocation(gl.program, "u_circle");
-	
+
+	// Set values
 	gl.vertexAttrib2f(a_p, particle.position[0], particle.position[1]);
 	gl.vertexAttrib1f(a_p_s, particle.size);
 	gl.uniform4f(u_c, particle.color[0], particle.color[1], particle.color[2], particle.color[3]);
@@ -288,8 +308,12 @@ function drawParticle(gl, particle) {
 // Update particle to follow the cursor
 function followCursor(canvas, particle) {
 	if (config.MOUSE) {
+		// The particle's velocity is set to always point towards the cursor
+		// which is then scaled by the particle scaling factor
 		particle.velocity = [(2 * config.MOUSE[0] / canvas.width) - 1 - particle.position[0], (2 * config.MOUSE[1] / (-canvas.height)) + 1 - particle.position[1]];
 		particle.velocity = [particle.velocity[0] * particle.scale, particle.velocity[1] * particle.scale];
+
+		// Add the velocity to the position
 		particle.position = [particle.position[0] + particle.velocity[0], particle.position[1] + particle.velocity[1]];
 	}
 }
@@ -297,14 +321,20 @@ function followCursor(canvas, particle) {
 // Update particle to follow the cursor in a circular fashion
 function followCursorCircle(canvas, particle) {
 	if (config.MOUSE) {
+
+		// Get the velo towards the center (the cursor) and the velo perpendicular to that
 		let centerVelo = [(2 * config.MOUSE[0] / canvas.width) - 1 - particle.position[0], (2 * config.MOUSE[1] / (-canvas.height)) + 1 - particle.position[1]];
 		let perpendicularVelo = [-centerVelo[1], centerVelo[0]];
-		
+
+		// Make the velocity point towards both the cursor while also
+		// going perpendicular to its current position - this causes the
+		// particles to move towards the cursor in circular/spiral fashion
 		particle.velocity = [
 			centerVelo[0] * particle.scale + perpendicularVelo[0] * particle.scale,
 			centerVelo[1] * particle.scale + perpendicularVelo[1] * particle.scale
 		];
-		
+
+		// Update the position
 		particle.position = [
 			particle.position[0] + particle.velocity[0], 
 			particle.position[1] + particle.velocity[1]
@@ -315,22 +345,29 @@ function followCursorCircle(canvas, particle) {
 // Update particle to orbit
 function followCursorSloppyOrbit(canvas, particle) {
 	if (config.MOUSE) {
-		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];	
-			
+		// Get mouse position in GL coordinates
+		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];
+
+		// Find center and perpendicular velocity (center is cursor)
 		let centerVelo = [glMouseCoords[0] - particle.position[0], glMouseCoords[1] - particle.position[1]];
-		
 		let perpendicularVelo = [-centerVelo[1], centerVelo[0]];
-		
-		let centerMag = Math.sqrt(centerVelo[0] ** 2 + centerVelo[1] ** 2);		
+
+		// Find the magnitude towards the center
+		let centerMag = Math.sqrt(centerVelo[0] ** 2 + centerVelo[1] ** 2);
+
+		// If this magnitude is small, stop going towards the center
 		if (centerMag < 0.2) {
 			centerVelo = [0.0, 0.0];
 		}
-		
+
+		// MOUSE_MOVEMENT is added so that the particles will follow the mouse deltas
+		// instead of directly just the cursor position. That way some shape is retained when the cursor moves
 		particle.velocity = [
 			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * particle.scale * 0.2 + centerVelo[0] * 0.02,
 			-config.MOUSE_MOVEMENT[1] / 1000 + perpendicularVelo[1] * particle.scale * 0.2 + centerVelo[1] * 0.02
 		];
-		
+
+		// Add velocity to position
 		particle.position = [
 			particle.position[0] + particle.velocity[0], 
 			particle.position[1] + particle.velocity[1]
@@ -450,7 +487,6 @@ function followCursorBounce(canvas, particle) {
 
 		particle.position[1] = clamp(particle.position[1], -0.95, 2);
 
-
 		if (particle.position[1] <= -0.95 && Math.abs(particle.velocity[1]) < 0.01) {
 			console.log(particle.position[1]);
 			particle.position[0] = glMouseCoords[0];
@@ -463,7 +499,7 @@ function followCursorBounce(canvas, particle) {
 			particle.position[0] += particle.velocity[0];
 			particle.position[1] += particle.velocity[1];
 		}  else if (particle.position[1] <= -0.95) {
-			particle.velocity[1] = -0.7 * particle.velocity[1];
+			particle.velocity[1] = -(particle.scale + 0.5) * particle.velocity[1];
 			particle.position[0] += particle.velocity[0];
 			particle.position[1] += particle.velocity[1];
 		} else {
@@ -489,6 +525,7 @@ function distance(x1, y1, x2, y2) {
 	return Math.sqrt((x1 - x2) ** 2  + (y1 - y2) ** 2);
 }
 
+// Clamp function, same as GLSL
 function clamp(value, min, max) {
 	if (value <= min) {
 		return min;
