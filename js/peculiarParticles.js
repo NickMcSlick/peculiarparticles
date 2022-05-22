@@ -416,13 +416,17 @@ function followCursorGalaxy(canvas, particle) {
 		
 		let perpendicularVelo = [-centerVelo[1], centerVelo[0]];
 
-		let centerMag = Math.sqrt(centerVelo[0] ** 2 + centerVelo[1] ** 2);		
+		let centerMag = Math.sqrt(centerVelo[0] ** 2 + centerVelo[1] ** 2);
+
+		if (centerMag === 0) {
+			centerMag = 0.001;
+		}
 	
 		perpendicularVelo = [(1 / centerMag) * perpendicularVelo[0], (1 / centerMag) * perpendicularVelo[1]];
 		
 		particle.velocity = [
-			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * particle.scale * 0.1 + centerVelo[0] / particle.scale * 0.01,
-			-config.MOUSE_MOVEMENT[1] / 1000 + perpendicularVelo[1] * particle.scale * 0.1 + centerVelo[1] / particle.scale * 0.01
+			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * particle.scale * 0.1 + centerVelo[0] / particle.scale * 0.001,
+			-config.MOUSE_MOVEMENT[1] / 1000 + perpendicularVelo[1] * particle.scale * 0.1 + centerVelo[1] / particle.scale * 0.001
 		];
 		
 		particle.position = [
