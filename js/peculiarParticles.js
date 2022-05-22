@@ -160,6 +160,9 @@ function updateParticle(canvas, selection, particle) {
 			followCursorSpray(canvas, particle);
 			break;
 		case 6:
+			followCursorFire(canvas, particle);
+			break;
+		case 7:
 			followCursorBounce(canvas, particle);
 			break;
 	}
@@ -383,6 +386,30 @@ function followCursorSpray(canvas, particle) {
 		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];
 
 		if (distance(0, 0, particle.position[0], particle.position[1]) >  Math.sqrt(2)) {
+			particle.position[0] = glMouseCoords[0];
+			particle.position[1] = glMouseCoords[1];
+		}
+
+		if (0.01 > distance(glMouseCoords[0], glMouseCoords[1], particle.position[0], particle.position[1])) {
+			particle.velocity[0] = 0.001 * (Math.random() * 2 - 1);
+			particle.velocity[1] = 0.01 * Math.random();
+			particle.position[0] += particle.velocity[0];
+			particle.position[1] += particle.velocity[1];
+		} else {
+			particle.velocity[1] += -0.0002;
+			particle.position[0] += particle.velocity[0];
+			particle.position[1] += particle.velocity[1];
+		}
+
+	}
+}
+
+// Follow cursor with a fire-like sharp spray
+function followCursorFire(canvas, particle) {
+	if (config.MOUSE) {
+		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];
+
+		if (particle.velocity[1] < 0.001) {
 			particle.position[0] = glMouseCoords[0];
 			particle.position[1] = glMouseCoords[1];
 		}
