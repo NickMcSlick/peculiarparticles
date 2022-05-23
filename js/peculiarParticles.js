@@ -14,7 +14,9 @@ alert("WARNING: THIS PROGRAM CONTAINS FLASHING COLORS FOR PARTICLES");
 
 /***** DESCRIPTION *****/
 // A fun look into simple 2D particle systems
-// These are all processed serially
+// The particles are all processed serially, so for some
+// browsers (FireFox in particular) a high number of particles
+// causes a slowdown. Chrome is reccomended for this reason
 /***********************/
 
 /***** COPYRIGHT *****/
