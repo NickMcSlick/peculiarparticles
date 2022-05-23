@@ -162,6 +162,7 @@ function main() {
 		animID = requestAnimationFrame(update);
 	}
 	
+	// Call the update function to start animating
 	update();
 }
 
