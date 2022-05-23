@@ -2,6 +2,12 @@
 // Peculiar Particles
 /*****************/
 
+/***** WARNING *****/
+// THIS PROGRAM CONTAINS FLASHING COLORS
+/*******************/
+
+alert("WARNING: THIS PROGRAM CONTAINS FLASHING COLORS FOR PARTICLES");
+
 /***** AUTHOR *****/
 // Bryce Paubel
 /******************/
@@ -10,12 +16,6 @@
 // A fun look into simple 2D particle systems
 // These are all processed serially
 /***********************/
-
-/***** WARNING *****/
-// THIS PROGRAM CONTAINS FLASHING COLORS
-/*******************/
-
-alert("WARNING: THIS PROGRAM CONTAINS FLASHING COLORS FOR PARTICLES");
 
 /***** COPYRIGHT *****/
 // Copyright 2022 Bryce Paubel
@@ -138,7 +138,7 @@ function main() {
 	// Update function for animation frames
 	let update = function() {
 		// If rave checked, set the new slider value and fire its events
-		if (rave.checked) {
+		if (rave.checked && config.MOUSE) {
 			colorSlider.value = (Number(colorSlider.value) + 1) % 360;
 			colorSlider.dispatchEvent(new Event("input"));
 		}
@@ -360,7 +360,7 @@ function followCursorSloppyOrbit(canvas, particle) {
 			centerVelo = [0.0, 0.0];
 		}
 
-		// MOUSE_MOVEMENT is added so that the particles will follow the mouse deltas
+		// MOUSE_MOVEMENT is added so that the particle will follow the mouse deltas
 		// instead of directly just the cursor position. That way some shape is retained when the cursor moves
 		particle.velocity = [
 			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * particle.scale * 0.2 + centerVelo[0] * 0.02,
@@ -378,28 +378,38 @@ function followCursorSloppyOrbit(canvas, particle) {
 // Update particle to orbit sharply
 function followCursorSharpOrbit(canvas, particle) {
 	if (config.MOUSE) {
+		// Get mouse position in GL coordinates
 		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];	
 			
+		// Get center velo and the velo perpendicular to that (center is cursor)
 		let centerVelo = [glMouseCoords[0] - particle.position[0], glMouseCoords[1] - particle.position[1]];
-		
 		let perpendicularVelo = [-centerVelo[1], centerVelo[0]];
 
+		// Find the magnitude of the center velo
 		let centerMag = Math.sqrt(centerVelo[0] ** 2 + centerVelo[1] ** 2);	
-		let isOrbiting = false;
+
+		// If the particle enters this range, do not move towards the center
 		if (centerMag < 0.2 && centerMag > 0.15) {
 			centerVelo = [0.0, 0.0];
+		// If the particle is too close, move outwards
 		} else if (centerMag <= 0.15) {
 			centerVelo = [-0.5 * centerVelo[0], -0.5 * centerVelo[1]];
+		// If the particle is nearing the center, slow down	
 		} else if (centerMag > 0.2 && centerMag < 0.25) {
 			centerVelo = [0.1 * centerVelo[0], 0.1 * centerVelo[1]];
+		// If the particle is very far away, move towards the center quickly	
 		} else {
 			centerVelo = [centerVelo[0] * 1.5, centerVelo[1] * 1.5];
 		}
+
+		// MOUSE_MOVEMENT is added so that the particle will follow the mouse deltas
+		// instead of directly just the cursor position. That way some shape is retained when the cursor moves
 		particle.velocity = [
 			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * (particle.scale + 0.1) * 0.2 + centerVelo[0] * 0.02,
 			-config.MOUSE_MOVEMENT[1] / 1000 + perpendicularVelo[1] * (particle.scale + 0.1) * 0.2 + centerVelo[1] * 0.02
 		];
 		
+		// Add velocity to the position
 		particle.position = [
 			particle.position[0] + particle.velocity[0], 
 			particle.position[1] + particle.velocity[1]
@@ -410,25 +420,32 @@ function followCursorSharpOrbit(canvas, particle) {
 // Update particle to circle around the center like a galaxy
 function followCursorGalaxy(canvas, particle) {
 	if (config.MOUSE) {
+		// Get the mouse position in GL coordinates
 		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];	
 			
+		// Get center velo and the velo perpendicular to that (center is cursor)
 		let centerVelo = [glMouseCoords[0] - particle.position[0], glMouseCoords[1] - particle.position[1]];
-		
 		let perpendicularVelo = [-centerVelo[1], centerVelo[0]];
 
+		// Find the magnitude of the center velocity
 		let centerMag = Math.sqrt(centerVelo[0] ** 2 + centerVelo[1] ** 2);
 
+		// If the center magnitude is zero, make it 0.001 so we don't divide by zero later
 		if (centerMag === 0) {
 			centerMag = 0.001;
 		}
 	
+		// Make the perpendicular velo inversely proportional to the distance from the center
 		perpendicularVelo = [(1 / centerMag) * perpendicularVelo[0], (1 / centerMag) * perpendicularVelo[1]];
 		
+		// MOUSE_MOVEMENT is added so that the particle will follow the mouse deltas
+		// instead of directly just the cursor position. That way some shape is retained when the cursor moves
 		particle.velocity = [
 			config.MOUSE_MOVEMENT[0] / 1000 + perpendicularVelo[0] * particle.scale * 0.1 + centerVelo[0] / particle.scale * 0.001,
 			-config.MOUSE_MOVEMENT[1] / 1000 + perpendicularVelo[1] * particle.scale * 0.1 + centerVelo[1] / particle.scale * 0.001
 		];
 		
+		// Add the velocity to the position
 		particle.position = [
 			particle.position[0] + particle.velocity[0], 
 			particle.position[1] + particle.velocity[1]
@@ -439,19 +456,29 @@ function followCursorGalaxy(canvas, particle) {
 // Let the particles spray
 function followCursorSpray(canvas, particle) {
 	if (config.MOUSE) {
+		// Get the mouse position in GL coordinates
 		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];
 
+		// If the particle moves offscreen, go back to the mouse
 		if (distance(0, 0, particle.position[0], particle.position[1]) >  Math.sqrt(2)) {
 			particle.position[0] = glMouseCoords[0];
 			particle.position[1] = glMouseCoords[1];
 		}
 
+		// If the particle is close to the mouse (i.e., it has been initialized or sent back to the mouse position)
+		// Then seed it with a new initial velocity that will send it up and outwards
 		if (0.01 > distance(glMouseCoords[0], glMouseCoords[1], particle.position[0], particle.position[1])) {
-			particle.velocity[0] = 0.001 * (Math.random() * 2 - 1);
-			particle.velocity[1] = 0.01 * Math.random();
+			// Seed the initial velocity to go in any upward direction
+			particle.velocity[0] = 0.001 * (Math.random() * 2 - 1); // [-0.001, 0.001)
+			particle.velocity[1] = 0.01 * Math.random();			// [0, 0.1)
+
+			// Add the velocity to the position
 			particle.position[0] += particle.velocity[0];
 			particle.position[1] += particle.velocity[1];
+
+		// Otherwise, go downwards
 		} else {
+			// Add a negative value, i.e., gravity, to the velocity
 			particle.velocity[1] += -0.0002;
 			particle.position[0] += particle.velocity[0];
 			particle.position[1] += particle.velocity[1];
@@ -463,20 +490,32 @@ function followCursorSpray(canvas, particle) {
 // Follow cursor with a fire-like sharp spray
 function followCursorFire(canvas, particle) {
 	if (config.MOUSE) {
+		// Get the mouse position in GL coordinates
 		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];
 
+		// If the particle is nearing the peak of its parabola trajectory, send it back to the mouse
 		if (particle.velocity[1] < 0.001) {
 			particle.position[0] = glMouseCoords[0];
 			particle.position[1] = glMouseCoords[1];
 		}
 
+		// If the particle is near the mouse, i.e. it has been initialized or sent back to the mouse, then
+		// seed it with a new initial upward velocity
 		if (0.01 > distance(glMouseCoords[0], glMouseCoords[1], particle.position[0], particle.position[1])) {
-			particle.velocity[0] = 0.001 * (Math.random() * 2 - 1);
-			particle.velocity[1] = 0.01 * Math.random();
+			// New random upward velocity
+			particle.velocity[0] = 0.001 * (Math.random() * 2 - 1); // [-0.001, 0.001)
+			particle.velocity[1] = 0.01 * Math.random();			// [-0.01, 0.01)
+
+			// Add velocity to the position
 			particle.position[0] += particle.velocity[0];
 			particle.position[1] += particle.velocity[1];
+
+		// Otherwise, go downwards	
 		} else {
+			// Add a negative value, i.e., gravity, to the velocity
 			particle.velocity[1] += -0.0002;
+
+			// Add velocity to position
 			particle.position[0] += particle.velocity[0];
 			particle.position[1] += particle.velocity[1];
 		}
@@ -487,30 +526,49 @@ function followCursorFire(canvas, particle) {
 // Let the particles spray and bounce
 function followCursorBounce(canvas, particle) {
 	if (config.MOUSE) {
+		// Get the mouse position in GL coordinates
 		let glMouseCoords = [(2 * config.MOUSE[0] / canvas.width) - 1, (2 * config.MOUSE[1] / (-canvas.height)) + 1];
 
-		particle.position[1] = clamp(particle.position[1], -0.95, 2);
-
+		// If the particle is on the floor and it has a low velocity, meaning it isn't bouncing much,
+		// send it back to the mouse and re-seed it with a velocity
 		if (particle.position[1] <= -0.95 && Math.abs(particle.velocity[1]) < 0.01) {
 			particle.position[0] = glMouseCoords[0];
 			particle.position[1] = glMouseCoords[1];
 		}
-
+		
+		// If the particle is near the mouse, i.e. it has been initialized or sent back to the mouse, then
+		// seed it with a new initial upward velocity 
 		if (0.01 > distance(glMouseCoords[0], glMouseCoords[1], particle.position[0], particle.position[1])) {
-			particle.velocity[0] = 0.001 * (Math.random() * 2 - 1);
-			particle.velocity[1] = 0.01 * Math.random();
+			// New random upward velocity
+			particle.velocity[0] = 0.001 * (Math.random() * 2 - 1); // [-0.001, 0.001)
+			particle.velocity[1] = 0.01 * Math.random();			// [-0.01, 0.01)
+
+			// Add velocity to position
 			particle.position[0] += particle.velocity[0];
 			particle.position[1] += particle.velocity[1];
+		
+		// If the particle is on the floor, make it bounce	
 		}  else if (particle.position[1] <= -0.95) {
+			// Negate the y-component of velocity and scale it down relative to the particle
+			// This makes sure that the particle always has a bounce smaller than its previous bounce
 			particle.velocity[1] = -(particle.scale + 0.5) * particle.velocity[1];
+
+			// Add velocity to position
 			particle.position[0] += particle.velocity[0];
 			particle.position[1] += particle.velocity[1];
+
+		// Otherwise, go downwards	
 		} else {
+			// Add a negative value, i.e., gravity, to the velocity
 			particle.velocity[1] += -0.001;
+
+			// Add velocity to position
 			particle.position[0] += particle.velocity[0];
 			particle.position[1] += particle.velocity[1];
 		}
 
+		// Clamp the y-value so that a particle's position doesn't 'go through the floor'
+		particle.position[1] = clamp(particle.position[1], -0.95, 2);
 	}
 }
 
